@@ -216,7 +216,7 @@ def run_asset_selector():
 
         # Hint
         hint = tk.Label(row_frame,
-                        text="e.g. AAPL  /  TTE.PA  /  BTC-USD",
+                        text="e.g. AAPL  /  GLD  /  SWDA.L",
                         bg=PANEL, fg="#484F58", font=FONT_SM)
         hint.pack(side="left", padx=4)
 
@@ -440,16 +440,13 @@ def run_optimizer(ASSETS, RF, START, END):
     print("\n4. Generating dashboard...")
 
     fig = plt.figure(figsize=(18, 12), facecolor="#0D1117")
-
-    # ── Main title with "by AEG" ──────────────────────────────
     fig.suptitle(
         f"Portfolio Optimizer — {' | '.join(ASSETS)}  ({START} → {END})   ™ by AEG",
-        fontsize=13, fontweight="bold", color="white", y=0.995
+        fontsize=13, fontweight="bold", color="white", y=0.985
     )
 
-    # ── Grid: top=0.91 leaves room for the metrics bar below suptitle ──
     gs = fig.add_gridspec(2, 3, hspace=0.44, wspace=0.36,
-                           left=0.06, right=0.97, top=0.91, bottom=0.06)
+                           left=0.06, right=0.97, top=0.89, bottom=0.06)
     ax1 = fig.add_subplot(gs[0, :2])
     ax2 = fig.add_subplot(gs[0, 2])
     ax3 = fig.add_subplot(gs[1, 0])
