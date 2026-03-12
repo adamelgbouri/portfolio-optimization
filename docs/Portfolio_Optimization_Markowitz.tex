@@ -1,0 +1,275 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\geometry{margin=2.5cm}
+
+\title{Portfolio Optimization using the Markowitz Model}
+\author{Adam El Gbouri}
+\date{March 2026}
+
+\lstset{
+language=Python,
+basicstyle=\ttfamily\small,
+keywordstyle=\color{blue},
+commentstyle=\color{gray},
+stringstyle=\color{orange},
+breaklines=true
+}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+Portfolio construction is one of the central problems in quantitative finance. 
+Investors seek to allocate capital across different assets in order to maximize return while controlling risk. 
+
+In 1952, Harry Markowitz introduced \textit{Modern Portfolio Theory (MPT)}, which formalized the relationship between risk and diversification. 
+The key idea is that the risk of a portfolio depends not only on the risk of individual assets, but also on the correlations between them.
+
+The purpose of this project is to implement a complete portfolio optimization tool in Python based on the Markowitz framework. 
+The program allows users to select financial assets, retrieve historical data, compute statistical metrics, simulate thousands of possible portfolios, and determine the optimal asset allocation.
+
+The project combines financial theory, numerical optimization and data visualization into a single interactive application.
+
+\section{General Architecture of the Project}
+
+The program is organized into two main components.
+
+\begin{itemize}
+\item An \textbf{asset selection interface} allowing the user to choose financial instruments.
+\item A \textbf{portfolio optimization engine} implementing the Markowitz model and producing visual results.
+\end{itemize}
+
+The workflow of the program is the following:
+
+\begin{enumerate}
+\item Asset selection through a graphical interface.
+\item Download of historical price data.
+\item Computation of asset returns and statistical properties.
+\item Monte Carlo simulation of random portfolios.
+\item Numerical optimization to find optimal portfolios.
+\item Generation of a graphical dashboard summarizing the results.
+\end{enumerate}
+
+This modular structure separates the user interaction from the mathematical computations.
+
+\section{Technologies and Libraries}
+
+The project relies on several Python libraries widely used in data science and quantitative finance.
+
+\begin{itemize}
+
+\item \textbf{NumPy} is used for numerical operations and matrix algebra.
+
+\item \textbf{Pandas} provides data structures for time series manipulation and statistical calculations.
+
+\item \textbf{SciPy} is used for constrained optimization through the Sequential Least Squares Programming (SLSQP) algorithm.
+
+\item \textbf{Matplotlib} is used to generate graphical visualizations of the results.
+
+\item \textbf{yfinance} allows the program to download historical financial data directly from Yahoo Finance.
+
+\item \textbf{Tkinter} is used to build the graphical user interface.
+
+\item \textbf{financedatabase} is an open-source library that provides a large catalog of financial assets classified by exchange, asset class and industry sector.
+
+\end{itemize}
+
+The financedatabase library is particularly useful because it allows users to explore different types of financial instruments such as equities, ETFs, indices, cryptocurrencies and currencies.
+
+\section{Asset Selection Interface}
+
+The program starts with an interactive graphical interface where users can select the assets they wish to analyze.
+
+The interface includes:
+
+\begin{itemize}
+
+\item A search bar to find assets by name or ticker symbol.
+
+\item A dynamically generated list of assets retrieved from the \texttt{financedatabase} library.
+
+\item Filtering by major international exchanges such as NASDAQ, NYSE, Euronext, Tokyo Stock Exchange and London Stock Exchange.
+
+\item The possibility to manually add custom ticker symbols.
+
+\item Adjustable parameters including the analysis period and the risk-free rate.
+
+\end{itemize}
+
+At least two assets must be selected in order to perform portfolio optimization, since diversification effects cannot be studied with a single asset.
+
+\section{Financial Data Retrieval}
+
+Once the assets are selected, the program downloads historical price data using the Yahoo Finance API through the \texttt{yfinance} library.
+
+The dataset consists of daily closing prices for each asset over the selected time period. 
+These prices form a time series matrix:
+
+\[
+P =
+\begin{bmatrix}
+P_{1,1} & P_{1,2} & \dots & P_{1,n} \\
+P_{2,1} & P_{2,2} & \dots & P_{2,n} \\
+\vdots & \vdots & \ddots & \vdots \\
+P_{T,1} & P_{T,2} & \dots & P_{T,n}
+\end{bmatrix}
+\]
+
+where \(T\) represents the number of trading days and \(n\) represents the number of assets.
+
+From these prices, logarithmic returns are computed in order to analyze the relative change in value from one day to the next:
+
+\[
+r_t = \ln \left(\frac{P_t}{P_{t-1}}\right)
+\]
+
+Logarithmic returns are commonly used in financial modeling because they have desirable statistical properties and are additive over time.
+
+\section{Statistical Properties of Assets}
+
+Using the return series, the program estimates two key quantities:
+
+\begin{itemize}
+
+\item the \textbf{expected return} of each asset
+
+\item the \textbf{covariance matrix} measuring the co-movement between assets
+
+\end{itemize}
+
+Daily statistics are annualized assuming approximately 252 trading days per year.
+
+The vector of expected returns is given by
+
+\[
+\mu = 252 \times \text{mean}(r)
+\]
+
+while the covariance matrix is
+
+\[
+\Sigma = 252 \times \text{cov}(r)
+\]
+
+These two quantities form the basis of the Markowitz optimization framework.
+
+\section{Portfolio Risk and Return}
+
+Consider a portfolio composed of \(n\) assets with weights \(w = (w_1, w_2, ..., w_n)\).
+
+The expected return of the portfolio is a weighted combination of individual asset returns:
+
+\[
+R_p = w^T \mu
+\]
+
+The portfolio risk is measured by the standard deviation of returns, which depends on the covariance matrix:
+
+\[
+\sigma_p = \sqrt{w^T \Sigma w}
+\]
+
+These two quantities represent the fundamental trade-off between return and risk.
+
+To evaluate risk-adjusted performance, the Sharpe ratio is used:
+
+\[
+S = \frac{R_p - R_f}{\sigma_p}
+\]
+
+where \(R_f\) is the risk-free rate.
+
+The Sharpe ratio measures how much excess return is obtained for each unit of risk.
+
+\section{Monte Carlo Portfolio Simulation}
+
+Before solving the optimization problem, the program explores the space of possible portfolios using a Monte Carlo simulation.
+
+Thousands of random portfolios are generated by assigning random weights to each asset under the constraint:
+
+\[
+\sum_{i=1}^{n} w_i = 1
+\]
+
+Each simulated portfolio is evaluated in terms of its expected return, volatility and Sharpe ratio.
+
+This simulation produces a cloud of portfolios in the risk-return space and provides a visual understanding of diversification effects.
+
+\section{Efficient Frontier}
+
+Among all possible portfolios, some are clearly inefficient because another portfolio exists with both higher return and lower risk.
+
+The set of optimal portfolios forms the \textbf{Efficient Frontier}.
+
+Mathematically, each point on the frontier is obtained by solving the following optimization problem:
+
+\[
+\min_w w^T \Sigma w
+\]
+
+subject to:
+
+\[
+w^T \mu = R_{target}
+\]
+
+By varying the target return \(R_{target}\), the entire efficient frontier can be traced.
+
+\section{Optimal Portfolios}
+
+Two portfolios are particularly important in the Markowitz framework.
+
+\subsection{Minimum Variance Portfolio}
+
+This portfolio minimizes total portfolio volatility without considering returns.
+
+It represents the lowest achievable risk for the given set of assets.
+
+\subsection{Tangent Portfolio}
+
+The tangent portfolio maximizes the Sharpe ratio and lies on the Capital Market Line.
+
+It represents the portfolio with the best risk-adjusted performance.
+
+In this project, both portfolios are computed numerically using the SLSQP optimization algorithm from SciPy.
+
+\section{Dashboard Visualization}
+
+After completing the optimization, the program generates a graphical dashboard summarizing the results.
+
+The dashboard contains several panels.
+
+\textbf{Efficient Frontier Plot}
+
+A scatter plot showing simulated portfolios along with the efficient frontier, the tangent portfolio and the minimum variance portfolio.
+
+\textbf{Normalized Price Evolution}
+
+A time series graph displaying normalized asset prices in order to compare their historical performance.
+
+\textbf{Portfolio Allocation}
+
+Two pie charts illustrating the composition of the tangent portfolio and the minimum variance portfolio.
+
+\textbf{Individual Sharpe Ratios}
+
+A bar chart showing the Sharpe ratio of each asset individually, allowing comparison between assets and the optimal portfolio.
+
+\section{Conclusion}
+
+This project demonstrates how classical portfolio theory can be implemented using modern data science tools.
+
+By combining financial theory, statistical estimation, numerical optimization and data visualization, the program provides a complete framework for portfolio analysis.
+
+Such an implementation can serve as a basis for more advanced quantitative finance models, including dynamic portfolio allocation, factor models, machine learning forecasts or risk management techniques.
+
+\end{document}
